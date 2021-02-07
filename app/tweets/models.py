@@ -2,18 +2,15 @@ import random
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
-from rest_framework.permissions import IsAuthenticated
 
 User = settings.AUTH_USER_MODEL
 
 class TweetLike(models.Model):
-    permission_classes = (IsAuthenticated,)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     tweet = models.ForeignKey("Tweet", on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class TweetQuerySet(models.QuerySet):
-    permission_classes = (IsAuthenticated,)
     def by_username(self, username):
         return self.filter(user__username__iexact=username)
 
@@ -35,7 +32,6 @@ class TweetManager(models.Manager):
         return self.get_queryset().feed(user)
 
 class Tweet(models.Model):
-    permission_classes = (IsAuthenticated,)
     # Maps to SQL data
     # id = models.AutoField(primary_key=True)
     parent = models.ForeignKey("self", null=True, on_delete=models.SET_NULL)
@@ -65,23 +61,3 @@ class Tweet(models.Model):
             "content": self.content,
             "likes": random.randint(0, 200)
         }
-
-class FollowerRelation(models.Model):
-    permission_classes = (IsAuthenticated,)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    profile = models.ForeignKey("Profile", on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-class Profile(models.Model):
-    permission_classes = (IsAuthenticated,)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    location = models.CharField(max_length=220, null=True, blank=True)
-    bio = models.TextField(blank=True, null=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    followers = models.ManyToManyField(User, related_name='following', blank=True)
-    """
-    project_obj = Profile.objects.first()
-    project_obj.followers.all() -> All users following this profile
-    user.following.all() -> All user profiles I follow
-    """
